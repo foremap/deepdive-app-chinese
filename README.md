@@ -1,22 +1,8 @@
-
-
-<!-- TOC -->
-
-- [Introduction](#introduction)
-- [Prerequisite](#prerequisite)
-- [Processing Raw Input Data](#processing-raw-input-data)
-    - [Initialize Postgresql](#initialize-postgresql)
-    - [Declare Schema](#declare-schema)
-    - [Loading Raw Input Data](#loading-raw-input-data)
-    - [Specifying connections between variables](#specifying-connections-between-variables)
-
-<!-- /TOC -->
-
-# Introduction 
+# 1. Introduction 
 
 This project is a deepDive transaction example with Chinese Support. 
 
-# Prerequisite
+# 2. Prerequisite
 
 * **DeepDive >= 0.8 stable** 
 
@@ -74,15 +60,15 @@ The raw input data include two parts , company's transaction data and announceme
 
 In our project, we put some data in ./input/transaction_dbdata.csv file and articles.csv .  
 
-# Processing Raw Input Data 
+# 3. Processing Raw Input Data 
 
-## Initialize Postgresql
+## 3.1. Initialize Postgresql
 
 DeepDive will store all data—input, intermediate, output, etc.—in a relational database. Currently, Postgres, Greenplum, and MySQL are supported; however, Greenplum or Postgres are strongly recommended. To set the location of this database, we need to configure a URL in the db.url file, e.g.:
 
 `$ echo "postgresql://$USER@$HOSTNAME:5432/deepdive_spouse_$USER" >db.url`
 
-## Declare Schema
+## 3.2. Declare Schema
 we need to declare the schema of this articles table in our `./app.ddlog` file; we add the following lines:
 
 ``` js
@@ -112,7 +98,7 @@ Then we compile our application, as we must do whenever we change app.ddlog:
 $ deepdive compile
 ```
 
-## Loading Raw Input Data 
+## 3.3. Loading Raw Input Data 
 we tell DeepDive to execute the steps to load the articles table using the 'input/articles.csv' file 
 
 ``` bash
@@ -142,7 +128,7 @@ $ deepdive sql "SELECT id FROM articles"
  ```
 
 
-# NLP Processing 
+# 4、 Processing 
 
 Next, we'll use Stanford's CoreNLP natural language processing (NLP) system to add useful markups and structure to our input data. This step will split up our articles into sentences and their component tokens (roughly, the words). Additionally, we'll get lemmas (normalized word forms), part-of-speech (POS) tags, named entity recognition (NER) tags, and a dependency parse of the sentence. We declare the output schema of this step in `app.ddlog`:
 
@@ -232,7 +218,7 @@ doc_id   | sentence_index
 
 ```
 
-# Extracting Data
+# 5、Extracting Data
 
 ## Extracting candidate relation mentions
 
@@ -449,8 +435,7 @@ Again, to run, just compile and execute as in previous steps.
 
 ```
 
-# Learning and inference: model specification
-
+# 6、Learning and inference: model specification
 ## Labeling data
 Now, we need to use data from table transaction_dbdata which setup in previous step. this data get from http://www.gtarsc.com/DataMarket/Index , it is very authentic . First we'll declare a new table where we'll store the labels (referring to the transaction candidate mentions), with an integer value (True=1, False=-1) and a description (rule_id):
 
