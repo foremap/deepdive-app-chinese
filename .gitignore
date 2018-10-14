@@ -103,4 +103,7 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-/img 
+/img
+/udf/bazaar/parser/lib
+/udf/bazaar/parser/target
+/run 
