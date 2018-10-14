@@ -1,20 +1,32 @@
-# DeepDive Transaction Example with Chinese Support
 
-## introduction 
 
-This project is a chinese app for bulid a KG by deepdive。 the company's relations can be shown in this project . 
+<!-- TOC -->
 
-## Prerequisite
+- [Introduction](#introduction)
+- [Prerequisite](#prerequisite)
+- [Processing Raw Input Data](#processing-raw-input-data)
+    - [Initialize Postgresql](#initialize-postgresql)
+    - [Declare Schema](#declare-schema)
+    - [Loading Raw Input Data](#loading-raw-input-data)
+    - [Specifying connections between variables](#specifying-connections-between-variables)
 
-1. **DeepDive >= 0.8 stable** 
+<!-- /TOC -->
 
-The DeepDive is only run on Linux . you can run bash to install DeepDive online .
+# Introduction 
+
+This project is a deepDive transaction example with Chinese Support. 
+
+# Prerequisite
+
+* **DeepDive >= 0.8 stable** 
+
+The DeepDive is only running on Linux . we can run bash script to install DeepDive online .
 
 ```bash
 bash <(curl -fsSL git.io/getdeepdive)
 ```
 
-Then , you can quickly install DeepDive by selecting the deepdive option:
+Then , we can quickly install DeepDive by selecting the deepdive option:
 
 ```
 ### DeepDive installer for Linux
@@ -33,17 +45,17 @@ open `~/.bashrc` file , add `export PATH=$PATH:$HOME/local/bin` .  run command `
 
 
 
-2、**Postgresql 9.6**
+* **Postgresql 9.6**
 
-You can select postgres from DeepDive's installer to install it and spin up an instance on you machine, or just run the following command:
+We can select postgres from DeepDive's installer to install it and spin up an instance on you machine, or just run the following command:
 
 ``` bash 
 bash <(curl -fsSL git.io/getdeepdive) postgres
 ```
 
-3、**CoreNlp model** 
+* **CoreNlp model** 
 
-For chinese support , you must download stanford-srparser-2014-10-23-models.jar and stanford-chinese-corenlp-2016-01-19-models.jar from stanford NLP website.
+For chinese support , we must download stanford-srparser-2014-10-23-models.jar and stanford-chinese-corenlp-2016-01-19-models.jar from stanford NLP website.
 
 > https://nlp.stanford.edu/software/stanford-chinese-corenlp-2016-01-19-models.jar
 > https://nlp.stanford.edu/software/stanford-srparser-2014-10-23-models.jar
@@ -52,25 +64,25 @@ Next, put these jar in `./udf/bazaar/parser/lib` , like this .
 
 ![2018-10-14-11-50-14](http://www.xdpie.com/2018-10-14-11-50-14.png)
 
-Finally , we need to excute `$ sbt/sbt stage` to rebulid  (in parser file ). 
+Finally , we need to excute `$ sbt/sbt stage` to rebulid  (note: command in `parser` file ). 
 
-4、**Raw Data**
+* **Raw Input Data**
 
-The data include two parts , company's transaction data and announcements。We can get more transaction from http://www.gtarsc.com/DataMarket/Index.
+The raw input data include two parts , company's transaction data and announcements data。We can get more transaction from http://www.gtarsc.com/DataMarket/Index.
 
 ![2018-10-14-10-41-52](http://www.xdpie.com/2018-10-14-10-41-52.png)
 
-In our project, we put some samples in ./input/transaction_dbdata.csv file and articles.csv .  
+In our project, we put some data in ./input/transaction_dbdata.csv file and articles.csv .  
 
-## Processing Raw Input Data 
+# Processing Raw Input Data 
 
-### 1、Initialize Postgresql
+## Initialize Postgresql
 
 DeepDive will store all data—input, intermediate, output, etc.—in a relational database. Currently, Postgres, Greenplum, and MySQL are supported; however, Greenplum or Postgres are strongly recommended. To set the location of this database, we need to configure a URL in the db.url file, e.g.:
 
 `$ echo "postgresql://$USER@$HOSTNAME:5432/deepdive_spouse_$USER" >db.url`
 
-### 2、 Declare Schema
+## Declare Schema
 we need to declare the schema of this articles table in our `./app.ddlog` file; we add the following lines:
 
 ``` js
@@ -100,7 +112,7 @@ Then we compile our application, as we must do whenever we change app.ddlog:
 $ deepdive compile
 ```
 
-### 3、Loading Raw Input Data 
+## Loading Raw Input Data 
 we tell DeepDive to execute the steps to load the articles table using the 'input/articles.csv' file 
 
 ``` bash
@@ -128,7 +140,9 @@ $ deepdive sql "SELECT id FROM articles"
  1201738764
  ...
  ```
-### 4、NLP Processing 
+
+
+# NLP Processing 
 
 Next, we'll use Stanford's CoreNLP natural language processing (NLP) system to add useful markups and structure to our input data. This step will split up our articles into sentences and their component tokens (roughly, the words). Additionally, we'll get lemmas (normalized word forms), part-of-speech (POS) tags, named entity recognition (NER) tags, and a dependency parse of the sentence. We declare the output schema of this step in `app.ddlog`:
 
@@ -218,7 +232,9 @@ doc_id   | sentence_index
 
 ```
 
-### 5、Extracting candidate relation mentions
+# Extracting Data
+
+## Extracting candidate relation mentions
 
 Once again we first declare the schema:
 ``` Python
@@ -355,7 +371,7 @@ $ deepdive sql "SELECT p1_id,p1_name, p2_id, p2_name FROM  transaction_candidate
 
 PS：此处如果报路径错误，请将transform.py中company_full_short.csv的相对路径改为绝对路径
 
-### 6、Extracting features for each candidate
+## Extracting features for each candidate
 We will extract a set of features for each candidate:
 
 ```
@@ -433,7 +449,9 @@ Again, to run, just compile and execute as in previous steps.
 
 ```
 
-### 6、Labeling data
+# Learning and inference: model specification
+
+## Labeling data
 Now, we need to use data from table transaction_dbdata which setup in previous step. this data get from http://www.gtarsc.com/DataMarket/Index , it is very authentic . First we'll declare a new table where we'll store the labels (referring to the transaction candidate mentions), with an integer value (True=1, False=-1) and a description (rule_id):
 
 ```
@@ -516,7 +534,8 @@ has_transaction(p1_id, p2_id) = if l > 0 then TRUE
 $ deepdive compile && deepdive do has_transaction
 ```
 
-8、Specifying connections between variables
+
+## Specifying connections between variables
 
 Finally, we can specify dependencies between the prediction variables, with either learned or given weights. Here, we'll specify two such rules, with fixed (given) weights that we specify. First, we define a symmetry connection, namely specifying that if the model thinks a person mention p1 and a person mention p2 indicate a spousal relationship in a sentence, then it should also think that the reverse is true, i.e., that p2 and p1 indicate one too:
 
