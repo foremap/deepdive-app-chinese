@@ -62,13 +62,13 @@ In our project, we put some data in ./input/transaction_dbdata.csv file and arti
 
 # 3. Processing Raw Input Data 
 
-## 3.1. Initialize Postgresql
+## Initialize Postgresql
 
 DeepDive will store all data—input, intermediate, output, etc.—in a relational database. Currently, Postgres, Greenplum, and MySQL are supported; however, Greenplum or Postgres are strongly recommended. To set the location of this database, we need to configure a URL in the db.url file, e.g.:
 
 `$ echo "postgresql://$USER@$HOSTNAME:5432/deepdive_spouse_$USER" >db.url`
 
-## 3.2. Declare Schema
+## Declare Schema
 we need to declare the schema of this articles table in our `./app.ddlog` file; we add the following lines:
 
 ``` js
@@ -98,7 +98,7 @@ Then we compile our application, as we must do whenever we change app.ddlog:
 $ deepdive compile
 ```
 
-## 3.3. Loading Raw Input Data 
+## Loading Raw Input Data 
 we tell DeepDive to execute the steps to load the articles table using the 'input/articles.csv' file 
 
 ``` bash
