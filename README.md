@@ -1,26 +1,46 @@
-# 1. Introduction 
+
+<!-- TOC -->
+
+- [1. **Introduction**](#1-introduction)
+- [2. **Prerequisite**](#2-prerequisite)
+- [3. **Processing Raw Input Data**](#3-processing-raw-input-data)
+    - [3.1. Initialize Postgresql](#31-initialize-postgresql)
+    - [3.2. Declare Schema](#32-declare-schema)
+- [4. **Processing**](#4-processing)
+- [5. **Extracting Data**](#5-extracting-data)
+    - [5.1. Extracting candidate relation mentions](#51-extracting-candidate-relation-mentions)
+    - [5.2. Extracting features for each candidate](#52-extracting-features-for-each-candidate)
+- [6. **Learning and inference: model specification**](#6-learning-and-inference-model-specification)
+    - [6.1. Labeling data](#61-labeling-data)
+- [7、 **Learningand inference: model specification**](#7-learningand-inference-model-specification)
+    - [6.2. Specifying connections between variables](#62-specifying-connections-between-variables)
+
+<!-- /TOC -->
+
+
+
+# 1. **Introduction**
 
 This project is a deepDive transaction example with Chinese Support. 
 
-# 2. Prerequisite
+# 2. **Prerequisite**
 
-* **DeepDive >= 0.8 stable** 
+**DeepDive >= 0.8 stable** 
 
 The DeepDive is only running on Linux . we can run bash script to install DeepDive online .
 
 ```bash
 bash <(curl -fsSL git.io/getdeepdive)
 ```
-
 Then , we can quickly install DeepDive by selecting the deepdive option:
 
 ```
-### DeepDive installer for Linux
+DeepDive installer for Linux
 1) deepdive                   5) jupyter_notebook
 2) deepdive_docker_sandbox    6) postgres
 3) deepdive_example_notebook  7) run_deepdive_tests
 4) deepdive_from_release      8) spouse_example
-# Install what (enter to repeat options, a to see all, q to quit, or a number)? 1
+Install what (enter to repeat options, a to see all, q to quit, or a number)? 1
 
 ```
 
@@ -28,10 +48,7 @@ open `~/.bashrc` file , add `export PATH=$PATH:$HOME/local/bin` .  run command `
 
 ![2018-10-14-10-57-54](http://www.xdpie.com/2018-10-14-10-57-54.png)
 
-
-
-
-* **Postgresql 9.6**
+**Postgresql 9.6**
 
 We can select postgres from DeepDive's installer to install it and spin up an instance on you machine, or just run the following command:
 
@@ -39,7 +56,7 @@ We can select postgres from DeepDive's installer to install it and spin up an in
 bash <(curl -fsSL git.io/getdeepdive) postgres
 ```
 
-* **CoreNlp model** 
+**CoreNlp model** 
 
 For chinese support , we must download stanford-srparser-2014-10-23-models.jar and stanford-chinese-corenlp-2016-01-19-models.jar from stanford NLP website.
 
@@ -52,7 +69,7 @@ Next, put these jar in `./udf/bazaar/parser/lib` , like this .
 
 Finally , we need to excute `$ sbt/sbt stage` to rebulid  (note: command in `parser` file ). 
 
-* **Raw Input Data**
+**Raw Input Data**
 
 The raw input data include two parts , company's transaction data and announcements data。We can get more transaction from http://www.gtarsc.com/DataMarket/Index.
 
@@ -60,23 +77,25 @@ The raw input data include two parts , company's transaction data and announceme
 
 In our project, we put some data in ./input/transaction_dbdata.csv file and articles.csv .  
 
-# 3. Processing Raw Input Data 
+# 3. **Processing Raw Input Data**
 
-## Initialize Postgresql
+## 3.1. Initialize Postgresql
 
 DeepDive will store all data—input, intermediate, output, etc.—in a relational database. Currently, Postgres, Greenplum, and MySQL are supported; however, Greenplum or Postgres are strongly recommended. To set the location of this database, we need to configure a URL in the db.url file, e.g.:
 
 `$ echo "postgresql://$USER@$HOSTNAME:5432/deepdive_spouse_$USER" >db.url`
 
-## Declare Schema
+## 3.2. Declare Schema
 we need to declare the schema of this articles table in our `./app.ddlog` file; we add the following lines:
 
 ``` js
 @source
 articles(
-	@key
-	@distributed_by
+    @key
+    @distributed_by
+    
     id      text,
+    
     @searchable
     content text
 ).
@@ -98,41 +117,15 @@ Then we compile our application, as we must do whenever we change app.ddlog:
 $ deepdive compile
 ```
 
-## Loading Raw Input Data 
-we tell DeepDive to execute the steps to load the articles table using the 'input/articles.csv' file 
-
-``` bash
-$ deepdive do transaction_dbdata &&  deepdive do articles
-```
-After that finishes, we can take a look at the loaded data using the following deepdive sql command, which enumerates the values for the id column of the articles table: 
-
-``` bash 
-$ deepdive sql "SELECT id FROM articles"
-```
-
-```
-     id     
-------------
- 1201734370
- 1201734454
- 1201734455
- 1201734457
- 1201734458
- 1201734460
- 1201734461
- 1201734464
- 1201738707
- 1201738753
- 1201738764
- ...
- ```
 
 
-# 4、 Processing 
+
+# 4. **Processing** 
 
 Next, we'll use Stanford's CoreNLP natural language processing (NLP) system to add useful markups and structure to our input data. This step will split up our articles into sentences and their component tokens (roughly, the words). Additionally, we'll get lemmas (normalized word forms), part-of-speech (POS) tags, named entity recognition (NER) tags, and a dependency parse of the sentence. We declare the output schema of this step in `app.ddlog`:
 
-``` js
+
+``` 
 @source
 sentences(
 	@key
@@ -215,12 +208,12 @@ doc_id   | sentence_index
  1201734370 |             26
  1201734370 |             27
 
-
 ```
 
-# 5、Extracting Data
 
-## Extracting candidate relation mentions
+# 5. **Extracting Data**
+
+## 5.1. Extracting candidate relation mentions
 
 Once again we first declare the schema:
 ``` Python
@@ -355,12 +348,18 @@ $ deepdive sql "SELECT p1_id,p1_name, p2_id, p2_name FROM  transaction_candidate
 
 ![2018-10-14-13-40-09](http://www.xdpie.com/2018-10-14-13-40-09.png)
 
-PS：此处如果报路径错误，请将transform.py中company_full_short.csv的相对路径改为绝对路径
+> Note: in `./udf/transform.py` , the `company_full_short.csv` path should change `to/your/path/company_full_short.csv` like this:
 
-## Extracting features for each candidate
+```Python
+from entity_match import *
+ENTITY_FILE = "/home/stephen/deepdive-app-chinese/udf/company_full_short.csv"
+entity_dict = loaddict(ENTITY_FILE)
+```
+
+## 5.2. Extracting features for each candidate
 We will extract a set of features for each candidate:
 
-```
+``` js
 spouse_feature(
     p1_id   text,
     p2_id   text,
@@ -369,7 +368,7 @@ spouse_feature(
 ```
 > Note that getting the input for this UDF requires joining the person_mention and sentences tables:
 
-```
+``` js
 function extract_transaction_features over (
  p1_id text,
  p2_id text,
@@ -390,7 +389,7 @@ implementation "udf/extract_transaction_features.py" handles tsv lines.
 
 ```
 
-```
+``` js
 transaction_feature += extract_transaction_features(
 p1_id, p2_id, p1_begin_index, p1_end_index, p2_begin_index, p2_end_index,
 doc_id, sent_index, tokens, lemmas, pos_tags, ner_tags, dep_types, dep_tokens
@@ -435,11 +434,11 @@ Again, to run, just compile and execute as in previous steps.
 
 ```
 
-# 6、Learning and inference: model specification
-## Labeling data
+# 6. **Learning and inference: model specification**
+## 6.1. Labeling data
 Now, we need to use data from table transaction_dbdata which setup in previous step. this data get from http://www.gtarsc.com/DataMarket/Index , it is very authentic . First we'll declare a new table where we'll store the labels (referring to the transaction candidate mentions), with an integer value (True=1, False=-1) and a description (rule_id):
 
-```
+``` js
 @extraction
 transaction_label(
  @key
@@ -457,22 +456,22 @@ transaction_label(
 
 copy transaction_candidate to transaction_label .
 
-```
+``` js
  transaction_label(p1, p2, 0, NULL) :- transaction_candidate(p1, _, p2, _).
 ```
 
 copy transaction_dbdata to transaction_label , these data is get from authiority so it have high priority =3. 
 
-```
+``` js
 transaction_label(p1,p2, 3, "from_dbdata") :-
- transaction_candidate(p1, p1_name, p2, p2_name), transaction_dbdata(n1, n2),
- [ lower(n1) = lower(p1_name), lower(n2) = lower(p2_name) ;
- lower(n2) = lower(p1_name), lower(n1) = lower(p2_name) ].
- ```
+transaction_candidate(p1, p1_name, p2, p2_name), transaction_dbdata(n1, n2),
+[ lower(n1) = lower(p1_name), lower(n2) = lower(p2_name) ;
+lower(n2) = lower(p1_name), lower(n1) = lower(p2_name) ].
+```
 
 We can also create a supervision rule which does not rely on any secondary structured dataset.
 
-```
+``` js
  function supervise over (
  p1_id text, p1_begin int, p1_end int,
  p2_id text, p2_begin int, p2_end int,
@@ -492,15 +491,15 @@ implementation "udf/supervise_transaction.py" handles tsv lines.
 
 ```
 
-```
+``` bash
 $ deepdive do transaction_label_resolved
 ```
 
-7、 Learning and inference: model specification
+# 7、 **Learningand inference: model specification** 
 
 Specifying prediction variables
 
-```
+``` js
 @extraction
 has_transaction?(
  p1_id text,
@@ -509,37 +508,38 @@ has_transaction?(
 ```
 
 
-```
+``` js
 has_transaction(p1_id, p2_id) = if l > 0 then TRUE
- else if l < 0 then FALSE
- else NULL end :- transaction_label_resolved(p1_id, p2_id, l).
+else if l < 0 then FALSE
+else NULL end :- transaction_label_resolved(p1_id, p2_id, l).
 ```
 
-```
+``` bash
 $ deepdive compile && deepdive do has_transaction
 ```
 
 
-## Specifying connections between variables
+## 6.2. Specifying connections between variables
 
-Finally, we can specify dependencies between the prediction variables, with either learned or given weights. Here, we'll specify two such rules, with fixed (given) weights that we specify. First, we define a symmetry connection, namely specifying that if the model thinks a person mention p1 and a person mention p2 indicate a spousal relationship in a sentence, then it should also think that the reverse is true, i.e., that p2 and p1 indicate one too:
-
-```
-@weight(f)
-has_transaction(p1_id, p2_id) :-
- transaction_candidate(p1_id, _, p2_id, _),
- transaction_feature(p1_id, p2_id, f).
-```
 
 First, we define a symmetry connection, namely specifying that if the model thinks a company mention p1 and a company mention p2 indicate a transaction relationship in a sentence, then it should also think that the reverse is true, i.e., that p2 and p1 indicate one too
 
-```
+``` js
  @weight(3.0)
  has_transaction(p1_id, p2_id) => has_transaction(p2_id, p1_id) :-
  transaction_candidate(p1_id, _, p2_id, _).
  ```
 
- ```
+
+``` js
+@weight(f)
+has_transaction(p1_id, p2_id) :-
+transaction_candidate(p1_id, _, p2_id, _),
+transaction_feature(p1_id, p2_id, f).
+```
+
+
+ ``` bash
 $ deepdive compile && deepdive do probabilities
  ```
 
