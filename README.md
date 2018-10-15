@@ -12,8 +12,8 @@
     - [5.2. Extracting features for each candidate](#52-extracting-features-for-each-candidate)
 - [6. **Learning and inference: model specification**](#6-learning-and-inference-model-specification)
     - [6.1. Labeling data](#61-labeling-data)
-- [7、 **Learningand inference: model specification**](#7-learningand-inference-model-specification)
-    - [6.2. Specifying connections between variables](#62-specifying-connections-between-variables)
+- [7. **Learningand inference: model specification**](#7-learningand-inference-model-specification)
+    - [7.1. Specifying connections between variables](#71-specifying-connections-between-variables)
 
 <!-- /TOC -->
 
@@ -495,7 +495,7 @@ implementation "udf/supervise_transaction.py" handles tsv lines.
 $ deepdive do transaction_label_resolved
 ```
 
-# 7、 **Learningand inference: model specification** 
+# 7. **Learningand inference: model specification** 
 
 Specifying prediction variables
 
@@ -519,7 +519,7 @@ $ deepdive compile && deepdive do has_transaction
 ```
 
 
-## 6.2. Specifying connections between variables
+## 7.1. Specifying connections between variables
 
 
 First, we define a symmetry connection, namely specifying that if the model thinks a company mention p1 and a company mention p2 indicate a transaction relationship in a sentence, then it should also think that the reverse is true, i.e., that p2 and p1 indicate one too
