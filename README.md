@@ -12,7 +12,7 @@
     - [5.2. Extracting features for each candidate](#52-extracting-features-for-each-candidate)
 - [6. **Learning and inference: model specification**](#6-learning-and-inference-model-specification)
     - [6.1. Labeling data](#61-labeling-data)
-- [7. **Learningand inference: model specification**](#7-learningand-inference-model-specification)
+- [7. **Learning and inference: model specification**](#7-learning-and-inference-model-specification)
     - [7.1. Specifying connections between variables](#71-specifying-connections-between-variables)
 
 <!-- /TOC -->
@@ -311,7 +311,7 @@ transaction_candidate(
 ).
 ```
 
-We simply construct a table of person counts, and then do a join with our filtering conditions. In DDlog this looks like
+We simply construct a table of company counts, and then do a join with our filtering conditions. In DDlog this looks like
 
 ``` js
 num_company(doc_id, sentence_index, COUNT(p)) :-
@@ -366,7 +366,7 @@ spouse_feature(
     feature text
 ).
 ```
-> Note that getting the input for this UDF requires joining the person_mention and sentences tables:
+> Note that getting the input for this UDF requires joining the company_mention and sentences tables:
 
 ``` js
 function extract_transaction_features over (
@@ -472,6 +472,10 @@ lower(n2) = lower(p1_name), lower(n1) = lower(p2_name) ].
 We can also create a supervision rule which does not rely on any secondary structured dataset.
 
 ``` js
+
+transaction_label_resolved(p1_id, p2_id, SUM(vote)) :-
+ transaction_label(p1_id, p2_id, vote, rule_id).
+
  function supervise over (
  p1_id text, p1_begin int, p1_end int,
  p2_id text, p2_begin int, p2_end int,
@@ -495,7 +499,7 @@ implementation "udf/supervise_transaction.py" handles tsv lines.
 $ deepdive do transaction_label_resolved
 ```
 
-# 7. **Learningand inference: model specification** 
+# 7. **Learning and inference: model specification** 
 
 Specifying prediction variables
 
@@ -531,13 +535,15 @@ First, we define a symmetry connection, namely specifying that if the model thin
  ```
 
 
+
+
+
 ``` js
 @weight(f)
 has_transaction(p1_id, p2_id) :-
 transaction_candidate(p1_id, _, p2_id, _),
 transaction_feature(p1_id, p2_id, f).
-```
-
+ ```
 
  ``` bash
 $ deepdive compile && deepdive do probabilities
